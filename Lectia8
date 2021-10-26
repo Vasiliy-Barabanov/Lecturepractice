@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <chrono>
+#include <mutex>
+
+using namespace std;
+
+const double g = 9.8;
+const double dt = 0.01;
+const int print_delay = 100;
+const int calc_delay = 50; 
+
+struct datas
+{
+	double t;
+	double h;
+	double v;
+};
+vector<datas> parametrs(0);
+
+mutex mut;
+void gener(double v0, double h0) {
+	mut.lock();
+	double tf= (v0 + sqrt(v0 * v0 + 2 * g * h0)) / g;
+	double t = dt;
+	double h = h0;
+	double v = v0;
+	while (h > 0) {
+		h = h0 + v0 * t - g * t * t / 2;
+		v = v0 - g * t;
+		if (h >= 0) parametrs.push_back({ t, h, v });
+		t = t + dt;
+		
+	}
+	mut.unlock();
+}
+void printer() {
+	this_thread::sleep_for(chrono::milliseconds(10));
+	for (int i = 0; i < parametrs.size(); i++) {
+		cout << parametrs[i].t << "   " << parametrs[i].h << "   " << parametrs[i].v << "   ";
+		cout << endl;
+	}
+}
+int main()
+{
+	datas start;
+	cin >> start.h;
+	cin >> start.v;
+	thread th1(gener, start.v, start.h);
+	thread th2(printer);
+	th1.join();
+	th2.join();
+	parametrs.clear();
+}
+
+
+
+
